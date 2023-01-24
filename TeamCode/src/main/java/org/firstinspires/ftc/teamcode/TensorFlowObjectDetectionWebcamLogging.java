@@ -49,6 +49,7 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This 2022-2023 OpMode illustrates the basics of using the TensorFlow Object Detection API to
@@ -94,7 +95,7 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY = "%s/FIRST/data/VuforiaKey.txt";
-    public int image_index = 0;
+    public AtomicInteger image_index = new AtomicInteger(0);
     /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
      * localization engine.
@@ -142,9 +143,8 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
                         @Override
                         public void accept(Bitmap value) {
                             try (FileOutputStream image = new FileOutputStream(String.format("%s/webcam/image_%05d.jpg",
-                                    Environment.getExternalStorageDirectory().getAbsolutePath(), image_index))) {
+                                    Environment.getExternalStorageDirectory().getAbsolutePath(), image_index.getAndAdd(1)))) {
                                 value.compress(Bitmap.CompressFormat.JPEG, 90, image);
-                                image_index = image_index + 1;
                             } catch (IOException e) {
                                 telemetry.addData("ERROR:","Couldn't write webcam image\n" + e);
                                 telemetry.update();
