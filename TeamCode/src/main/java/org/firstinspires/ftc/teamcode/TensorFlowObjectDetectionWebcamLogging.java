@@ -48,7 +48,10 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -95,7 +98,6 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
      * and paste it in to your code on the next line, between the double quotes.
      */
     private static final String VUFORIA_KEY = "%s/FIRST/data/VuforiaKey.txt";
-    public AtomicInteger image_index = new AtomicInteger(0);
     /**
      * {@link #vuforia} is the variable we will use to store our instance of the Vuforia
      * localization engine.
@@ -142,8 +144,10 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
                     tfod.getFrameBitmap(Continuation.createTrivial(new org.firstinspires.ftc.robotcore.external.function.Consumer<Bitmap>() {
                         @Override
                         public void accept(Bitmap value) {
-                            try (FileOutputStream image = new FileOutputStream(String.format("%s/webcam/image_%05d.jpg",
-                                    Environment.getExternalStorageDirectory().getAbsolutePath(), image_index.getAndAdd(1)))) {
+                            try (FileOutputStream image = new FileOutputStream(String.format(Locale.ENGLISH,
+                                    "%s/webcam/image_%2$tF%2$tH%2$tM%2$tS%2$tL.jpg",
+                                    Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                    Calendar.getInstance().getTime()))) {
                                 value.compress(Bitmap.CompressFormat.JPEG, 90, image);
                             } catch (IOException e) {
                                 telemetry.addData("ERROR:","Couldn't write webcam image\n" + e);
