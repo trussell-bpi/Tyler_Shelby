@@ -85,6 +85,10 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
             "3 Panel"
     };
 
+
+    ElapsedTime limiter = new ElapsedTime(ElapsedTime.Resolution.MILLISECONDS); //Create timer used for limiter
+
+
     /*
      * IMPORTANT: You need to obtain your own license key to use Vuforia. The string below with which
      * 'parameters.vuforiaLicenseKey' is initialized is for illustration only, and will not function.
@@ -143,8 +147,8 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
             while (opModeIsActive()) {
                 if (tfod != null) {
                     /* Take one frame per second */
-                    if (getRuntime() - last_runtime > 1.0) {
-                        last_runtime = getRuntime();
+                    if (limiter.milliseconds() > 40) {
+                        limiter.reset();
                         tfod.getFrameBitmap(Continuation.createTrivial(new org.firstinspires.ftc.robotcore.external.function.Consumer<Bitmap>() {
                             @Override
                             public void accept(Bitmap value) {
