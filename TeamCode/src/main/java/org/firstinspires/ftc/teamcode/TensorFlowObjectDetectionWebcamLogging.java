@@ -32,9 +32,11 @@ package org.firstinspires.ftc.teamcode;
 import android.graphics.Bitmap;
 import android.os.Environment;
 
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.ClassFactory;
 import org.firstinspires.ftc.robotcore.external.Consumer;
@@ -64,8 +66,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * IMPORTANT: In order to use this OpMode, you need to obtain your own Vuforia license key as
  * is explained below.
  */
-@TeleOp(name = "Concept: TensorFlow Object Detection Webcam", group = "Concept")
-@Disabled
+@Autonomous(name = "TensorFlow Object Detection Webcam", group = "Concept")
 public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
 
     /*
@@ -76,8 +77,7 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
      * Here we assume it's an Asset.    Also see method initTfod() below .
      */
     // private static final String TFOD_MODEL_ASSET = "PowerPlay.tflite";
-    private static final String TFOD_MODEL_FILE  = "%s/FIRST/tflitemodels/CustomTeamModel.tflite";
-
+    private static final String TFOD_MODEL_FILE  = "%s/FIRST/tflitemodels/model_20230116_163024.tflite";
 
     private static final String[] LABELS = {
             "1 Bolt",
@@ -133,6 +133,7 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
             tfod.setZoom(1.0, 16.0/9.0);
         }
 
+        double last_runtime = 0;
         /** Wait for the game to begin */
         telemetry.addData(">", "Press Play to start op mode");
         telemetry.update();
@@ -141,20 +142,23 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
         if (opModeIsActive()) {
             while (opModeIsActive()) {
                 if (tfod != null) {
-                    tfod.getFrameBitmap(Continuation.createTrivial(new org.firstinspires.ftc.robotcore.external.function.Consumer<Bitmap>() {
-                        @Override
-                        public void accept(Bitmap value) {
-                            try (FileOutputStream image = new FileOutputStream(String.format(Locale.ENGLISH,
-                                    "%s/webcam/image_%2$tF%2$tH%2$tM%2$tS%2$tL.jpg",
-                                    Environment.getExternalStorageDirectory().getAbsolutePath(),
-                                    Calendar.getInstance().getTime()))) {
-                                value.compress(Bitmap.CompressFormat.JPEG, 90, image);
-                            } catch (IOException e) {
-                                telemetry.addData("ERROR:","Couldn't write webcam image\n" + e);
-                                telemetry.update();
+                    /* Take one frame per second */
+                    if (getRuntime() - last_runtime > 1.0) {
+                        last_runtime = getRuntime();
+                        tfod.getFrameBitmap(Continuation.createTrivial(new org.firstinspires.ftc.robotcore.external.function.Consumer<Bitmap>() {
+                            @Override
+                            public void accept(Bitmap value) {
+                                try (FileOutputStream image = new FileOutputStream(String.format(Locale.ENGLISH,
+                                        "%s/FIRST/webcam/image_%2$tF%2$tH%2$tM%2$tS%2$tL.jpg",
+                                        Environment.getExternalStorageDirectory().getAbsolutePath(),
+                                        Calendar.getInstance().getTime()))) {
+                                    value.compress(Bitmap.CompressFormat.JPEG, 90, image);
+                                } catch (IOException e) {
+                                    telemetry.addData("ERROR:", "Couldn't write webcam image\n" + e);
+                                }
                             }
-                        }
-                    }));
+                        }));
+                    }
                     // getUpdatedRecognitions() will return null if no new information is available since
                     // the last time that call was made.
                     List<Recognition> updatedRecognitions = tfod.getUpdatedRecognitions();
@@ -198,7 +202,7 @@ public class TensorFlowObjectDetectionWebcamLogging extends LinearOpMode {
             vuforiaKey = lineReader.readLine();
 
             parameters.vuforiaLicenseKey = vuforiaKey;
-            parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam 1");
+            parameters.cameraName = hardwareMap.get(WebcamName.class, "Webcam");
 
             //  Instantiate the Vuforia engine
             vuforia = ClassFactory.getInstance().createVuforia(parameters);
